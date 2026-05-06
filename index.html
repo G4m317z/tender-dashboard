@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tender Intelligence Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f12;
+    --bg2: #13161b;
+    --bg3: #1a1e25;
+    --bg4: #222730;
+    --border: #2a303c;
+    --border2: #353d4a;
+    --text: #e8eaf0;
+    --text2: #9aa0b0;
+    --text3: #5c6375;
+    --accent: #4f8ef7;
+    --accent2: #2a5cd4;
+    --gold: #f0a830;
+    --gold2: #c47d10;
+    --green: #34c980;
+    --green2: #1a7a48;
+    --red: #e84545;
+    --red2: #8a1f1f;
+    --purple: #9b6dff;
+    --teal: #2dd4bf;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans Arabic', sans-serif;
+    --radius: 10px;
+    --radius-lg: 16px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.3px;
+  }
+  .logo-dot {
+    width: 8px; height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--accent);
+  }
+  .header-meta {
+    font-size: 12px;
+    color: var(--text3);
+    font-family: var(--mono);
+  }
+
+  /* ── Nav ── */
+  nav {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+  }
+  .nav-btn {
+    padding: 12px 20px;
+    border: none;
+    background: none;
+    color: var(--text2);
+    cursor: pointer;
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .nav-btn:hover { color: var(--text); }
+  .nav-btn.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  /* ── Layout ── */
+  main {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ── Section header ── */
+  .section-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 1rem;
+  }
+
+  /* ── Stat cards ── */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 2rem;
+  }
+  .stat-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+  }
+  .stat-label {
+    font-size: 11px;
+    color: var(--text3);
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+  .stat-value {
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--text);
+    font-family: var(--mono);
+    letter-spacing: -1px;
+  }
+  .stat-sub {
+    font-size: 12px;
+    color: var(--text3);
+    margin-top: 4px;
+  }
+  .stat-card.accent { border-color: var(--accent2); }
+  .stat-card.gold { border-color: var(--gold2); }
+  .stat-card.green { border-color: var(--green2); }
+
+  /* ── Chart cards ── */
+  .chart-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .chart-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .chart-sub {
+    font-size: 12px;
+    color: var(--text3);
+    margin-bottom: 1.25rem;
+  }
+
+  /* ── Table ── */
+  .table-wrap { overflow-x: auto; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  th {
+    text-align: right;
+    padding: 10px 14px;
+    color: var(--text3);
+    font-weight: 500;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    font-size: 11px;
+    letter-spacing: 0.3px;
+  }
+  td {
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    vertical-align: middle;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--bg3); }
+  .rank-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: var(--mono);
+    background: var(--bg4);
+    color: var(--text2);
+  }
+  .rank-badge.gold { background: var(--gold2); color: var(--gold); }
+  .rank-badge.silver { background: #2a3040; color: #9ab; }
+  .rank-badge.bronze { background: #2a2218; color: #c97; }
+
+  /* ── Pills / badges ── */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    font-family: var(--mono);
+  }
+  .badge-green { background: var(--green2); color: var(--green); }
+  .badge-red { background: var(--red2); color: var(--red); }
+  .badge-blue { background: #1a2d5a; color: var(--accent); }
+  .badge-gold { background: #3a2800; color: var(--gold); }
+
+  /* ── Filters ── */
+  .filters {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+  }
+  select, input[type="text"] {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    color: var(--text);
+    padding: 8px 12px;
+    font-family: var(--sans);
+    font-size: 13px;
+    outline: none;
+    min-width: 180px;
+  }
+  select:focus, input[type="text"]:focus {
+    border-color: var(--accent);
+  }
+
+  /* ── Progress bar ── */
+  .bar-wrap { display: flex; align-items: center; gap: 10px; }
+  .bar-bg {
+    flex: 1;
+    height: 6px;
+    background: var(--bg4);
+    border-radius: 3px;
+    overflow: hidden;
+    min-width: 80px;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.4s ease;
+  }
+  .bar-label {
+    font-size: 12px;
+    color: var(--text2);
+    font-family: var(--mono);
+    min-width: 36px;
+    text-align: left;
+  }
+
+  /* ── Company name ── */
+  .company-name {
+    max-width: 280px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* ── Two-col grid ── */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  @media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
+
+  /* ── Tender card (breakdown view) ── */
+  .tender-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .tender-number {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+  }
+
+  /* ── Search box ── */
+  .search-wrap { position: relative; flex: 1; min-width: 200px; }
+  .search-wrap input { width: 100%; padding-right: 32px; }
+
+  /* ── Empty state ── */
+  .empty {
+    text-align: center;
+    padding: 4rem;
+    color: var(--text3);
+    font-size: 13px;
+  }
+
+  /* ── Loading ── */
+  #loading {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    z-index: 999;
+  }
+  .spinner {
+    width: 36px; height: 36px;
+    border: 2px solid var(--border2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #loading p { color: var(--text3); font-size: 13px; }
+
+  /* ── Mono numbers ── */
+  .mono { font-family: var(--mono); }
+  .up { color: var(--green); }
+  .down { color: var(--red); }
+  .neutral { color: var(--text2); }
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="spinner"></div>
+  <p>Loading tender data…</p>
+</div>
+
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    Tender Intelligence
+  </div>
+  <div class="header-meta" id="header-meta"></div>
+</header>
+
+<nav>
+  <button class="nav-btn active" onclick="switchView('overview')">Overview</button>
+  <button class="nav-btn" onclick="switchView('winners')">Winners & Rankings</button>
+  <button class="nav-btn" onclick="switchView('aggression')">Bid Aggressiveness</button>
+  <button class="nav-btn" onclick="switchView('compare')">Company Comparison</button>
+  <button class="nav-btn" onclick="switchView('tenders')">Tender Breakdown</button>
+</nav>
+
+<main>
+
+<!-- ════ VIEW: OVERVIEW ════ -->
+<div class="view active" id="view-overview">
+  <div class="stat-grid" id="overview-stats"></div>
+  <div class="two-col">
+    <div class="chart-card">
+      <div class="chart-title">Top 10 most active companies</div>
+      <div class="chart-sub">by number of tenders participated in</div>
+      <div style="position:relative;height:340px"><canvas id="chart-active" role="img" aria-label="Bar chart of most active companies by participation count"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Bid status breakdown</div>
+      <div class="chart-sub">approved vs. excluded across all tenders</div>
+      <div style="position:relative;height:220px"><canvas id="chart-status" role="img" aria-label="Doughnut chart of approved vs excluded bids"></canvas></div>
+      <div id="status-legend" style="display:flex;gap:20px;justify-content:center;margin-top:1rem;font-size:12px;color:var(--text2)"></div>
+    </div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Win rate by company</div>
+    <div class="chart-sub">companies that appeared in 2+ tenders — wins ÷ participations</div>
+    <div style="position:relative;height:280px"><canvas id="chart-winrate" role="img" aria-label="Bar chart of win rates per company"></canvas></div>
+  </div>
+</div>
+
+<!-- ════ VIEW: WINNERS ════ -->
+<div class="view" id="view-winners">
+  <div class="section-title">Leaderboard</div>
+  <div class="stat-grid" id="winners-stats"></div>
+  <div class="chart-card">
+    <div class="chart-title">Most frequent winners</div>
+    <div class="chart-sub">ranked by number of 1st-place finishes</div>
+    <div class="table-wrap">
+      <table id="winners-table">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Company</th>
+            <th>Wins</th>
+            <th>Participations</th>
+            <th>Win Rate</th>
+            <th>Avg. Position</th>
+            <th>Exclusions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ════ VIEW: AGGRESSION ════ -->
+<div class="view" id="view-aggression">
+  <div class="section-title">Bid aggressiveness</div>
+  <div style="margin-bottom:1rem;font-size:13px;color:var(--text2);max-width:700px">
+    How aggressively does each company bid? For percentage-based tenders, a more negative discount = more aggressive. For amount-based tenders, a lower offer relative to competitors = more aggressive.
+  </div>
+  <div class="two-col">
+    <div class="chart-card">
+      <div class="chart-title">Average discount offered (% tenders)</div>
+      <div class="chart-sub">more negative = more aggressive</div>
+      <div style="position:relative;height:340px"><canvas id="chart-discount" role="img" aria-label="Horizontal bar chart of average discounts per company"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Average gap from winner (amount tenders)</div>
+      <div class="chart-sub">how far above the winning bid each company tends to place</div>
+      <div style="position:relative;height:340px"><canvas id="chart-gap" role="img" aria-label="Horizontal bar chart of average gap from winner"></canvas></div>
+    </div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Aggressiveness ranking</div>
+    <div class="chart-sub">all companies with 2+ bids, sorted by average finishing position</div>
+    <div class="table-wrap">
+      <table id="aggression-table">
+        <thead>
+          <tr>
+            <th>Company</th>
+            <th>Bids placed</th>
+            <th>Avg. Position</th>
+            <th>Avg. Gap from Winner %</th>
+            <th>Exclusions</th>
+            <th>Assessment</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ════ VIEW: COMPARE ════ -->
+<div class="view" id="view-compare">
+  <div class="section-title">Head-to-head comparison</div>
+  <div class="filters">
+    <select id="compare-a" onchange="renderCompare()"><option value="">Select company A…</option></select>
+    <select id="compare-b" onchange="renderCompare()"><option value="">Select company B…</option></select>
+  </div>
+  <div id="compare-output">
+    <div class="empty">Select two companies above to compare them</div>
+  </div>
+</div>
+
+<!-- ════ VIEW: TENDERS ════ -->
+<div class="view" id="view-tenders">
+  <div class="section-title">All tenders</div>
+  <div class="filters">
+    <div class="search-wrap">
+      <input type="text" id="tender-search" placeholder="Search by subject or number…" oninput="renderTenders()">
+    </div>
+    <select id="tender-filter-org" onchange="renderTenders()">
+      <option value="">All organizations</option>
+    </select>
+  </div>
+  <div id="tenders-list"></div>
+</div>
+
+</main>
+
+<script>
+let DATA = null;
+let COMPANIES = {};  // name -> stats
+
+// ── Load data ──────────────────────────────────────────────
+async function loadData() {
+  try {
+    const r = await fetch('tenders.json');
+    if (!r.ok) throw new Error('tenders.json not found');
+    DATA = await r.json();
+  } catch (e) {
+    // fallback: use inline sample
+    DATA = getSampleData();
+  }
+  buildCompanyIndex();
+  init();
+}
+
+function buildCompanyIndex() {
+  COMPANIES = {};
+  for (const t of DATA.tenders) {
+    for (const b of t.bids) {
+      const n = b.contractor_name;
+      if (!COMPANIES[n]) {
+        COMPANIES[n] = {
+          name: n,
+          number: b.contractor_number,
+          wins: 0,
+          participations: 0,
+          exclusions: 0,
+          positions: [],
+          gap_pcts: [],
+          discounts: [],
+          tenders: []
+        };
+      }
+      const c = COMPANIES[n];
+      c.participations++;
+      c.tenders.push({ tender: t.tender_number, subject: t.subject, bid: b });
+      if (b.status === 'excluded') {
+        c.exclusions++;
+      } else {
+        if (b.position === 1) c.wins++;
+        if (b.position) c.positions.push(b.position);
+        if (b.diff_from_winner_pct != null) c.gap_pcts.push(b.diff_from_winner_pct);
+        if (b.offer && b.offer.type === 'percentage') c.discounts.push(b.offer.value);
+      }
+    }
+  }
+}
+
+function avg(arr) {
+  if (!arr.length) return null;
+  return arr.reduce((a,b) => a+b, 0) / arr.length;
+}
+
+function fmt(n, decimals=1) {
+  if (n == null) return '—';
+  return n.toFixed(decimals);
+}
+
+function fmtKWD(n) {
+  if (n == null) return '—';
+  return new Intl.NumberFormat('en-KW', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n) + ' KWD';
+}
+
+function winRate(c) {
+  const denom = c.participations - c.exclusions;
+  return denom > 0 ? (c.wins / denom * 100) : 0;
+}
+
+// ── Init ───────────────────────────────────────────────────
+function init() {
+  document.getElementById('loading').style.display = 'none';
+  const meta = document.getElementById('header-meta');
+  meta.textContent = `${DATA.total_tenders} tenders · generated ${DATA.generated_at ? DATA.generated_at.split('T')[0] : 'N/A'}`;
+
+  populateCompareDropdowns();
+  populateTenderFilters();
+  renderOverview();
+  renderWinners();
+  renderAggression();
+  renderTenders();
+}
+
+function switchView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('view-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ── OVERVIEW ──────────────────────────────────────────────
+function renderOverview() {
+  const companies = Object.values(COMPANIES);
+  const totalBids = DATA.tenders.reduce((s, t) => s + t.bids.length, 0);
+  const totalApproved = DATA.tenders.reduce((s, t) => s + t.approved_bidders, 0);
+  const excluded = totalBids - totalApproved;
+  const uniqueOrgs = new Set(DATA.tenders.map(t => t.organization)).size;
+
+  document.getElementById('overview-stats').innerHTML = `
+    <div class="stat-card accent">
+      <div class="stat-label">Total Tenders</div>
+      <div class="stat-value mono">${DATA.total_tenders}</div>
+      <div class="stat-sub">${uniqueOrgs} organization${uniqueOrgs !== 1 ? 's' : ''}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Unique Companies</div>
+      <div class="stat-value mono">${companies.length}</div>
+      <div class="stat-sub">across all tenders</div>
+    </div>
+    <div class="stat-card gold">
+      <div class="stat-label">Total Bids Placed</div>
+      <div class="stat-value mono">${totalBids}</div>
+      <div class="stat-sub">${(totalBids / DATA.total_tenders).toFixed(1)} avg per tender</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Exclusion Rate</div>
+      <div class="stat-value mono">${(excluded/totalBids*100).toFixed(1)}%</div>
+      <div class="stat-sub">${excluded} bids excluded</div>
+    </div>
+  `;
+
+  // Top active companies
+  const sorted = companies.sort((a,b) => b.participations - a.participations).slice(0, 10);
+  const labels = sorted.map(c => c.name.length > 25 ? c.name.slice(0, 25) + '…' : c.name);
+
+  new Chart(document.getElementById('chart-active'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Participations',
+        data: sorted.map(c => c.participations),
+        backgroundColor: sorted.map((c, i) => i === 0 ? '#4f8ef7' : '#2a3650'),
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#5c6375' }, grid: { color: '#1a1e25' } },
+        y: { ticks: { color: '#9aa0b0', font: { size: 11 } }, grid: { display: false } }
+      }
+    }
+  });
+
+  // Status donut
+  new Chart(document.getElementById('chart-status'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Approved', 'Excluded'],
+      datasets: [{
+        data: [totalApproved, excluded],
+        backgroundColor: ['#34c980', '#e84545'],
+        borderWidth: 0,
+        hoverOffset: 4
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      cutout: '70%',
+      plugins: { legend: { display: false } }
+    }
+  });
+  document.getElementById('status-legend').innerHTML = `
+    <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:2px;background:#34c980"></span>Approved ${totalApproved}</span>
+    <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:2px;background:#e84545"></span>Excluded ${excluded}</span>
+  `;
+
+  // Win rate
+  const eligible = Object.values(COMPANIES).filter(c => c.participations >= 2 && (c.participations - c.exclusions) > 0);
+  const wrSorted = eligible.sort((a, b) => winRate(b) - winRate(a)).slice(0, 12);
+  new Chart(document.getElementById('chart-winrate'), {
+    type: 'bar',
+    data: {
+      labels: wrSorted.map(c => c.name.length > 22 ? c.name.slice(0,22)+'…' : c.name),
+      datasets: [{
+        label: 'Win rate %',
+        data: wrSorted.map(c => parseFloat(winRate(c).toFixed(1))),
+        backgroundColor: wrSorted.map(c => winRate(c) >= 50 ? '#2a7a48' : winRate(c) >= 20 ? '#1a3d6a' : '#2a303c'),
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { max: 100, ticks: { color: '#5c6375', callback: v => v + '%' }, grid: { color: '#1a1e25' } },
+        y: { ticks: { color: '#9aa0b0', font: { size: 11 } }, grid: { display: false } }
+      }
+    }
+  });
+}
+
+// ── WINNERS ───────────────────────────────────────────────
+function renderWinners() {
+  const companies = Object.values(COMPANIES);
+  const topWinner = companies.sort((a,b) => b.wins - a.wins)[0];
+  const best = topWinner ? topWinner.name : '—';
+  const mostActive = companies.sort((a,b) => b.participations - a.participations)[0];
+
+  document.getElementById('winners-stats').innerHTML = `
+    <div class="stat-card gold">
+      <div class="stat-label">Most Wins</div>
+      <div class="stat-value mono">${topWinner ? topWinner.wins : 0}</div>
+      <div class="stat-sub">${best.length > 30 ? best.slice(0,30)+'…' : best}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Most Active</div>
+      <div class="stat-value mono">${mostActive ? mostActive.participations : 0}</div>
+      <div class="stat-sub">${mostActive ? (mostActive.name.length > 30 ? mostActive.name.slice(0,30)+'…' : mostActive.name) : ''}</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-label">Perfect Win Rate</div>
+      <div class="stat-value mono">${companies.filter(c => winRate(c) === 100 && c.wins > 0).length}</div>
+      <div class="stat-sub">companies won every tender they entered</div>
+    </div>
+  `;
+
+  const ranked = Object.values(COMPANIES).sort((a,b) => b.wins - a.wins || b.participations - a.participations);
+  const tbody = document.querySelector('#winners-table tbody');
+  tbody.innerHTML = ranked.map((c, i) => {
+    const wr = winRate(c);
+    const avgPos = avg(c.positions);
+    const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+    return `<tr>
+      <td><span class="rank-badge ${rankClass}">${i+1}</span></td>
+      <td><div class="company-name" title="${c.name}">${c.name}</div></td>
+      <td><span class="badge ${c.wins > 0 ? 'badge-gold' : ''}">${c.wins}</span></td>
+      <td class="mono">${c.participations}</td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar-bg"><div class="bar-fill" style="width:${wr}%;background:${wr>=50?'#34c980':wr>=20?'#4f8ef7':'#353d4a'}"></div></div>
+          <span class="bar-label">${wr.toFixed(0)}%</span>
+        </div>
+      </td>
+      <td class="mono">${avgPos != null ? avgPos.toFixed(1) : '—'}</td>
+      <td class="mono ${c.exclusions > 0 ? 'down' : ''}">${c.exclusions || 0}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── AGGRESSION ────────────────────────────────────────────
+function renderAggression() {
+  const companies = Object.values(COMPANIES).filter(c => c.participations >= 1);
+
+  // Discount chart (% tenders only)
+  const discountCos = companies.filter(c => c.discounts.length > 0)
+    .sort((a,b) => avg(a.discounts) - avg(b.discounts)).slice(0, 12);
+  
+  if (discountCos.length) {
+    new Chart(document.getElementById('chart-discount'), {
+      type: 'bar',
+      data: {
+        labels: discountCos.map(c => c.name.length > 22 ? c.name.slice(0,22)+'…' : c.name),
+        datasets: [{
+          label: 'Avg discount %',
+          data: discountCos.map(c => parseFloat(avg(c.discounts).toFixed(1))),
+          backgroundColor: '#1a3050',
+          borderColor: '#4f8ef7',
+          borderWidth: 1,
+          borderRadius: 4
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: '#5c6375', callback: v => v + '%' }, grid: { color: '#1a1e25' } },
+          y: { ticks: { color: '#9aa0b0', font: { size: 11 } }, grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  // Gap chart (amount tenders only)
+  const gapCos = companies.filter(c => c.gap_pcts.filter(g => g > 0).length > 0)
+    .sort((a,b) => avg(a.gap_pcts.filter(g=>g>0)) - avg(b.gap_pcts.filter(g=>g>0))).slice(0, 12);
+
+  if (gapCos.length) {
+    new Chart(document.getElementById('chart-gap'), {
+      type: 'bar',
+      data: {
+        labels: gapCos.map(c => c.name.length > 22 ? c.name.slice(0,22)+'…' : c.name),
+        datasets: [{
+          label: 'Avg gap from winner %',
+          data: gapCos.map(c => parseFloat(avg(c.gap_pcts.filter(g=>g>0)).toFixed(1))),
+          backgroundColor: gapCos.map((c,i) => i < 3 ? '#1a3a28' : '#2a1a18'),
+          borderColor: gapCos.map((c,i) => i < 3 ? '#34c980' : '#e84545'),
+          borderWidth: 1,
+          borderRadius: 4
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: '#5c6375', callback: v => v + '%' }, grid: { color: '#1a1e25' } },
+          y: { ticks: { color: '#9aa0b0', font: { size: 11 } }, grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  // Aggression table
+  const ranked = companies.filter(c => c.positions.length >= 1)
+    .sort((a,b) => avg(a.positions) - avg(b.positions));
+
+  document.querySelector('#aggression-table tbody').innerHTML = ranked.map(c => {
+    const avgP = avg(c.positions);
+    const avgGap = avg(c.gap_pcts);
+    const assessment = avgP <= 1.5 ? `<span class="badge badge-gold">Top contender</span>`
+      : avgP <= 3 ? `<span class="badge badge-green">Competitive</span>`
+      : avgP <= 6 ? `<span class="badge badge-blue">Mid-field</span>`
+      : `<span class="badge" style="background:#2a1818;color:#e87070">Back of pack</span>`;
+    return `<tr>
+      <td><div class="company-name" title="${c.name}">${c.name}</div></td>
+      <td class="mono">${c.positions.length}</td>
+      <td class="mono ${avgP<=2?'up':avgP<=4?'neutral':'down'}">${fmt(avgP)}</td>
+      <td class="mono">${avgGap != null ? fmt(avgGap) + '%' : '—'}</td>
+      <td class="mono ${c.exclusions>0?'down':''}">${c.exclusions}</td>
+      <td>${assessment}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── COMPARE ───────────────────────────────────────────────
+function populateCompareDropdowns() {
+  const names = Object.keys(COMPANIES).sort();
+  ['compare-a','compare-b'].forEach(id => {
+    const sel = document.getElementById(id);
+    names.forEach(n => {
+      const opt = document.createElement('option');
+      opt.value = n;
+      opt.textContent = n.length > 50 ? n.slice(0,50)+'…' : n;
+      sel.appendChild(opt);
+    });
+  });
+}
+
+function renderCompare() {
+  const a = document.getElementById('compare-a').value;
+  const b = document.getElementById('compare-b').value;
+  const out = document.getElementById('compare-output');
+
+  if (!a || !b || a === b) {
+    out.innerHTML = '<div class="empty">Select two different companies to compare</div>';
+    return;
+  }
+
+  const ca = COMPANIES[a], cb = COMPANIES[b];
+
+  // Shared tenders
+  const tendersA = new Set(ca.tenders.map(t => t.tender));
+  const shared = cb.tenders.filter(t => tendersA.has(t.tender));
+
+  const metric = (label, va, vb, lowerBetter=false) => {
+    const aVal = va ?? '—', bVal = vb ?? '—';
+    let aClass = '', bClass = '';
+    if (va != null && vb != null) {
+      if (lowerBetter ? va < vb : va > vb) { aClass = 'up'; bClass = 'down'; }
+      else if (lowerBetter ? vb < va : vb > va) { bClass = 'up'; aClass = 'down'; }
+    }
+    return `<tr>
+      <td style="color:var(--text2)">${label}</td>
+      <td class="mono ${aClass}">${typeof va === 'number' ? va.toFixed(1) : aVal}${typeof va === 'number' && label.includes('%') ? '%' : ''}</td>
+      <td class="mono ${bClass}">${typeof vb === 'number' ? vb.toFixed(1) : bVal}${typeof vb === 'number' && label.includes('%') ? '%' : ''}</td>
+    </tr>`;
+  };
+
+  const wrA = winRate(ca), wrB = winRate(cb);
+  const avgPosA = avg(ca.positions), avgPosB = avg(cb.positions);
+  const avgGapA = avg(ca.gap_pcts), avgGapB = avg(cb.gap_pcts);
+  const avgDiscA = avg(ca.discounts), avgDiscB = avg(cb.discounts);
+
+  // Head to head in shared tenders
+  let aWins = 0, bWins = 0;
+  const h2hRows = shared.map(t => {
+    const bidA = ca.tenders.find(x => x.tender === t.tender).bid;
+    const bidB = t.bid;
+    const posA = bidA.position ?? 999, posB = bidB.position ?? 999;
+    if (posA < posB) aWins++; else if (posB < posA) bWins++;
+    return `<tr>
+      <td style="color:var(--text2);font-size:12px">${t.subject.length>40?t.subject.slice(0,40)+'…':t.subject}</td>
+      <td class="mono ${posA<posB?'up':posA>posB?'down':''}">${bidA.status==='excluded'?'<span class="badge badge-red">EX</span>':posA===999?'—':posA}</td>
+      <td class="mono ${posB<posA?'up':posB>posA?'down':''}">${bidB.status==='excluded'?'<span class="badge badge-red">EX</span>':posB===999?'—':posB}</td>
+    </tr>`;
+  }).join('');
+
+  out.innerHTML = `
+    <div class="two-col" style="margin-bottom:1.5rem">
+      <div class="chart-card" style="border-color:var(--accent2)">
+        <div style="font-size:11px;color:var(--accent);margin-bottom:4px">COMPANY A</div>
+        <div style="font-weight:600;font-size:13px">${a}</div>
+      </div>
+      <div class="chart-card" style="border-color:var(--gold2)">
+        <div style="font-size:11px;color:var(--gold);margin-bottom:4px">COMPANY B</div>
+        <div style="font-weight:600;font-size:13px">${b}</div>
+      </div>
+    </div>
+    <div class="two-col">
+      <div class="chart-card">
+        <div class="chart-title">Stats comparison</div>
+        <div class="chart-sub">head-to-head metrics</div>
+        <table style="width:100%;font-size:13px">
+          <thead><tr><th>Metric</th><th style="color:var(--accent)">A</th><th style="color:var(--gold)">B</th></tr></thead>
+          <tbody>
+            ${metric('Participations', ca.participations, cb.participations)}
+            ${metric('Wins', ca.wins, cb.wins)}
+            ${metric('Win rate %', wrA, wrB)}
+            ${metric('Avg position', avgPosA, avgPosB, true)}
+            ${metric('Avg gap from winner %', avgGapA, avgGapB, true)}
+            ${metric('Avg discount %', avgDiscA, avgDiscB, true)}
+            ${metric('Exclusions', ca.exclusions, cb.exclusions, true)}
+          </tbody>
+        </table>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Head-to-head in shared tenders</div>
+        <div class="chart-sub">${shared.length} tender${shared.length!==1?'s':''} in common · A wins: ${aWins} · B wins: ${bWins}</div>
+        ${shared.length === 0
+          ? '<div class="empty" style="padding:2rem">No shared tenders found</div>'
+          : `<table style="width:100%;font-size:13px">
+              <thead><tr><th>Tender</th><th style="color:var(--accent)">A pos.</th><th style="color:var(--gold)">B pos.</th></tr></thead>
+              <tbody>${h2hRows}</tbody>
+            </table>`
+        }
+      </div>
+    </div>
+  `;
+}
+
+// ── TENDERS ───────────────────────────────────────────────
+function populateTenderFilters() {
+  const orgs = [...new Set(DATA.tenders.map(t => t.organization))];
+  const sel = document.getElementById('tender-filter-org');
+  orgs.forEach(o => {
+    const opt = document.createElement('option');
+    opt.value = o;
+    opt.textContent = o;
+    sel.appendChild(opt);
+  });
+}
+
+function renderTenders() {
+  const search = document.getElementById('tender-search').value.toLowerCase();
+  const orgFilter = document.getElementById('tender-filter-org').value;
+
+  let filtered = DATA.tenders.filter(t => {
+    const matchSearch = !search || t.tender_number.toLowerCase().includes(search) || t.subject.toLowerCase().includes(search);
+    const matchOrg = !orgFilter || t.organization === orgFilter;
+    return matchSearch && matchOrg;
+  });
+
+  const list = document.getElementById('tenders-list');
+  if (!filtered.length) {
+    list.innerHTML = '<div class="empty">No tenders match your filters</div>';
+    return;
+  }
+
+  list.innerHTML = filtered.map(t => {
+    const bids = t.bids;
+    const approved = bids.filter(b => b.status === 'approved');
+    const excluded = bids.filter(b => b.status === 'excluded');
+
+    const rows = bids.sort((a,b) => (a.position||999)-(b.position||999)).map(b => {
+      const offerDisplay = b.offer
+        ? (b.offer.type === 'percentage' ? `<span class="mono ${b.offer.value<0?'up':''}">${b.offer.value}%</span>` : `<span class="mono">${fmtKWD(b.offer.value)}</span>`)
+        : '—';
+      const posDisplay = b.status === 'excluded'
+        ? `<span class="badge badge-red">Excluded</span>`
+        : (b.position ? `<span class="rank-badge ${b.position===1?'gold':b.position===2?'silver':b.position===3?'bronze':''}">${b.position}</span>` : '—');
+      return `<tr>
+        <td>${posDisplay}</td>
+        <td><div class="company-name" title="${b.contractor_name}">${b.contractor_name}</div></td>
+        <td>${offerDisplay}</td>
+        <td class="mono">${b.diff_from_winner_pct != null ? b.diff_from_winner_pct.toFixed(2)+'%' : '—'}</td>
+      </tr>`;
+    }).join('');
+
+    return `
+      <div class="chart-card" style="margin-bottom:1rem">
+        <div class="tender-header">
+          <div>
+            <div class="tender-number">${t.tender_number}</div>
+            <div style="font-weight:600;font-size:14px;margin-top:4px">${t.subject}</div>
+            <div style="font-size:12px;color:var(--text3);margin-top:2px">${t.organization}</div>
+          </div>
+          <div style="text-align:right;font-size:12px;color:var(--text3)">
+            ${t.closing_date ? '<div>Closed: ' + t.closing_date + '</div>' : ''}
+            <div style="margin-top:4px"><span class="badge badge-blue">${approved.length} approved</span> ${excluded.length > 0 ? `<span class="badge badge-red">${excluded.length} excluded</span>` : ''}</div>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Pos.</th><th>Company</th><th>Offer</th><th>Gap from #1</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ── SAMPLE DATA (fallback when tenders.json not found) ────
+function getSampleData() {
+  return {"generated_at":"2025-01-01T00:00:00","total_tenders":3,"tenders":[{"tender_number":"أ . ف / 4/2022/2023 (ع)","subject":"أعمال الترميم والأنشاءات الصغيرة بمواقع مختلفة لمساجد محافظة العاصمة","organization":"وزارة الشئون الإسلامية","publish_date":"2025-05-15","closing_date":"2025-05-13","meeting_date":"2025-05-14","winner":"شركة المباني المتكاملة للمقاولات العامة للمباني ش ش و","winner_contractor_number":"27861","total_bidders":6,"approved_bidders":5,"bids":[{"contractor_number":"27861","contractor_name":"شركة المباني المتكاملة للمقاولات العامة للمباني ش ش و","status":"approved","exclusion_reason":null,"offer":{"type":"percentage","value":-51.6},"position":1,"diff_from_winner":0.0,"diff_from_winner_pct":-0.0,"diff_from_prev":0.0,"diff_from_prev_pct":0.0},{"contractor_number":"6168","contractor_name":"شركة الخنيني للتجارة العامه والمقاولات ذ م م","status":"approved","exclusion_reason":null,"offer":{"type":"percentage","value":-42},"position":2,"diff_from_winner":9.6,"diff_from_winner_pct":-18.6,"diff_from_prev":9.6,"diff_from_prev_pct":-18.6},{"contractor_number":"13226","contractor_name":"شركة اوكسفورد الوطنية للتجارة العامة والمقاولات ذ م م","status":"approved","exclusion_reason":null,"offer":{"type":"percentage","value":-34},"position":3,"diff_from_winner":17.6,"diff_from_winner_pct":-34.11,"diff_from_prev":8.0,"diff_from_prev_pct":-19.05},{"contractor_number":"18035","contractor_name":"شركة كويت تك نت للتجارة العامة والمقاولات ذ م م","status":"approved","exclusion_reason":null,"offer":{"type":"percentage","value":-34},"position":4,"diff_from_winner":17.6,"diff_from_winner_pct":-34.11,"diff_from_prev":0.0,"diff_from_prev_pct":-0.0},{"contractor_number":"28010","contractor_name":"شركة ميديا العالمية للتجارة العامة والمقاولات ش ش و","status":"approved","exclusion_reason":null,"offer":{"type":"percentage","value":-20},"position":5,"diff_from_winner":31.6,"diff_from_winner_pct":-61.24,"diff_from_prev":14.0,"diff_from_prev_pct":-41.18},{"contractor_number":"21313","contractor_name":"شركة العز العالمية للتجارة العامة و المقاولات ذ م م","status":"excluded","exclusion_reason":"مادة 45","offer":{"type":"percentage","value":-23.2},"position":null,"diff_from_winner":null,"diff_from_winner_pct":null,"diff_from_prev":null,"diff_from_prev_pct":null}]},{"tender_number":"9/2024/2025","subject":"اعمال نظافة المساجد و المباني التابعة لادارة مساجد محافطة العاصمة و اية موقع اخرى بدولة الكويت","organization":"وزارة الشئون الإسلامية","publish_date":"2025-07-15","closing_date":"2025-07-13","meeting_date":"2025-07-14","winner":"شركة الرايه جروب للخدمات العامة ذ م م","winner_contractor_number":"26454","total_bidders":8,"approved_bidders":8,"bids":[{"contractor_number":"26454","contractor_name":"شركة الرايه جروب للخدمات العامة ذ م م","status":"approved","exclusion_reason":null,"offer":{"type":"amount","value":2609054.04},"position":1,"diff_from_winner":0.0,"diff_from_winner_pct":0.0,"diff_from_prev":0.0,"diff_from_prev_pct":0.0},{"contractor_number":"10355","contractor_name":"شركة صفا الوطنية لمقاولات تنظيف المباني والطرق والمدن ذ م م","status":"approved","exclusion_reason":null,"offer":{"type":"amount","value":2623356.9},"position":2,"diff_from_winner":14302.86,"diff_from_winner_pct":0.55,"diff_from_prev":14302.86,"diff_from_prev_pct":0.55},{"contractor_number":"8423","contractor_name":"شركة ادنك العالمية لمقاولات تنظيف المباني والطرق ذ م م","status":"approved","exclusion_reason":null,"offer":{"type":"amount","value":2681137.62},"position":3,"diff_from_winner":72083.58,"diff_from_winner_pct":2.76,"diff_from_prev":57780.72,"diff_from_prev_pct":2.2},{"contractor_number":"18060","contractor_name":"شركة المجد الأهلية للتجارة العامة والمقاولات ت ب","status":"approved","exclusion_reason":null,"offer":{"type":"amount","value":2763839.52},"position":4,"diff_from_winner":154785.48,"diff_from_winner_pct":5.93,"diff_from_prev":82701.9,"diff_from_prev_pct":3.08},{"contractor_number":"10349","contractor_name":"الشركة الوطنية للخدمات البيئية ش م ك م","status":"approved","exclusion_reason":null,"offer":{"type":"amount","value":3110989.152},"position":5,"diff_from_winner":501935.112,"diff_from_winner_pct":19.24,"diff_from_prev":347149.632,"diff_from_prev_pct":12.56},{"contractor_number":"10337","contractor_name":"شركة كونكورد سكاي لمقاولات التنظيف العام للمباني والمدن والطرق ذ م م","status":"approved","exclusion_reason":null,"offer":{"type":"amount","value":3368002.664},"position":6,"diff_from_winner":758948.624,"diff_from_winner_pct":29.09,"diff_from_prev":257013.512,"diff_from_prev_pct":8.26},{"contractor_number":"12692","contractor_name":"مركز الرواد للخدمات البيئية / فرع من شركة الرواد المتحدة للتجارة العامة والمقاولات ف ذ م م","status":"approved","exclusion_reason":null,"offer":{"type":"amount","value":3378391.212},"position":7,"diff_from_winner":769337.172,"diff_from_winner_pct":29.49,"diff_from_prev":10388.548,"diff_from_prev_pct":0.31},{"contractor_number":"8348","contractor_name":"شركة وائل النصف وشركاه التجارية ذ م م","status":"approved","exclusion_reason":null,"offer":{"type":"amount","value":3638702.688},"position":8,"diff_from_winner":1029648.648,"diff_from_winner_pct":39.46,"diff_from_prev":260311.476,"diff_from_prev_pct":7.71}]},{"tender_number":"8/2024/2025","subject":"اعمال نظافة المساجد و المباني التابعة لإدارة مساجد محافظة الأحمدي وأية مواقع اخرى بدولة الكويت","organization":"وزارة الشئون الإسلامية","publish_date":"2025-07-15","closing_date":"2025-07-13","meeting_date":"2025-07-14","winner":"شركة مجموعة الجزيرة العالمية للتجارة العامة والمقاولات ذ م م","winner_contractor_number":"7465","total_bidders":11,"approved_bidders":10,"bids":[{"contractor_number":"7465","contractor_name":"شركة مجموعة الجزيرة العالمية للتجارة العامة والمقاولات ذ م م","status":"approved","exclusion_reason":null,"offer":{"type":"amount","value":4101384.708},"position":1,"diff_from_winner":0.0,"diff_from_winner_pct":0.0,"diff_from_prev":0.0,"diff_from_prev_pct":0.0},{"contractor_number":"18060","contractor_name":"شركة المجد الأهلية للتجارة العامة والمقاولات ت ب","status":"approved","exclusion_reason":null,"offer":{"type":"amount","value":4152366.78},"position":2,"diff_from_winner":50982.072,"diff_from_winner_pct":1.24,"diff_from_prev":50982.072,"diff_from_prev_pct":1.24},{"contractor_number":"8423","contractor_name":"شركة ادنك العالمية لمقاولات تنظيف المباني والطرق ذ م م","status":"approved","exclusion_reason":null,"offer":{"type":"amount","value":4157938.26},"position":3,"diff_from_winner":56553.552,"diff_from_winner_pct":1.38,"diff_from_prev":5571.48,"diff_from_prev_pct":0.13},{"contractor_number":"16107","contractor_name":"شركة فالكون الكويتية لمقاولات تنظيف المباني والطرق والمدن ذ م م","status":"approved","exclusion_reason":null,"offer":{"type":"amount","value":4221558},"position":4,"diff_from_winner":120173.292,"diff_from_winner_pct":2.93,"diff_from_prev":63619.74,"diff_from_prev_pct":1.53},{"contractor_number":"10355","contractor_name":"شركة صفا الوطنية لمقاولات تنظيف المباني والطرق والمدن ذ م م","status":"approved","exclusion_reason":null,"offer":{"type":"amount","value":4356398.88},"position":5,"diff_from_winner":255014.172,"diff_from_winner_pct":6.22,"diff_from_prev":134840.88,"diff_from_prev_pct":3.19},{"contractor_number":"21209","contractor_name":"شركة جي ام للمقاولات العامة ذ م م","status":"approved","exclusion_reason":null,"offer":{"type":"amount","value":4537665},"position":6,"diff_from_winner":436280.292,"diff_from_winner_pct":10.64,"diff_from_prev":181266.12,"diff_from_prev_pct":4.16},{"contractor_number":"14981","contractor_name":"شركة جلوبل وست مانجمنت لمقاولات تنظيف المباني و الطرق ذ م م","status":"approved","exclusion_reason":null,"offer":{"type":"amount","value":5196465.456},"position":7,"diff_from_winner":1095080.748,"diff_from_winner_pct":26.7,"diff_from_prev":658800.456,"diff_from_prev_pct":14.52},{"contractor_number":"12692","contractor_name":"مركز الرواد للخدمات البيئية / فرع من شركة الرواد المتحدة للتجارة العامة والمقاولات ف ذ م م","status":"approved","exclusion_reason":null,"offer":{"type":"amount","value":5333806.8},"position":8,"diff_from_winner":1232422.092,"diff_from_winner_pct":30.05,"diff_from_prev":137341.344,"diff_from_prev_pct":2.64},{"contractor_number":"8348","contractor_name":"شركة وائل النصف وشركاه التجارية ذ م م","status":"approved","exclusion_reason":null,"offer":{"type":"amount","value":5951700.12},"position":9,"diff_from_winner":1850315.412,"diff_from_winner_pct":45.11,"diff_from_prev":617893.32,"diff_from_prev_pct":11.58},{"contractor_number":"6187","contractor_name":"شركة دانا وبيركلي التجارية ذ م م","status":"approved","exclusion_reason":null,"offer":{"type":"amount","value":7952608.8},"position":10,"diff_from_winner":3851224.092,"diff_from_winner_pct":93.9,"diff_from_prev":2000908.68,"diff_from_prev_pct":33.62},{"contractor_number":"47","contractor_name":"شركة الابرق التجارية ذ م م","status":"excluded","exclusion_reason":"مادة 45","offer":null,"position":null,"diff_from_winner":null,"diff_from_winner_pct":null,"diff_from_prev":null,"diff_from_prev_pct":null}]}]};
+}
+
+loadData();
+</script>
+</body>
+</html>
