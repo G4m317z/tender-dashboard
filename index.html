@@ -494,16 +494,14 @@ let COMPANIES = {};  // name -> stats
 
 // ── Load data ──────────────────────────────────────────────
 async function loadData() {
-  try {
-    const r = await fetch('tenders.json');
-    if (!r.ok) throw new Error('tenders.json not found');
-    DATA = await r.json();
-  } catch (e) {
-    // fallback: use inline sample
-   
-  }
-  buildCompanyIndex();
-  init();
+  const res = await fetch('/tender-dashboard/tenders.json');
+
+  const text = await res.text();
+  console.log(text); // DEBUG: see raw response
+
+  const data = JSON.parse(text);
+
+  buildCompanyIndex(data);
 }
 
 function buildCompanyIndex() {
