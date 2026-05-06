@@ -494,14 +494,23 @@ let COMPANIES = {};  // name -> stats
 
 // ── Load data ──────────────────────────────────────────────
 async function loadData() {
-  const res = await fetch('./tenders.json');
+  try {
+    const res = await fetch('./tenders.json');
 
-  const text = await res.text();
-  console.log(text); // DEBUG: see raw response
+    console.log("Status:", res.status);
 
-  const data = JSON.parse(text);
+    const text = await res.text();
+    console.log("RAW RESPONSE:", text.substring(0, 200)); // first 200 chars
 
-  buildCompanyIndex(data);
+    const data = JSON.parse(text);
+
+    console.log("PARSED:", data);
+
+    buildCompanyIndex(data);
+
+  } catch (err) {
+    console.error("ERROR:", err);
+  }
 }
 
 function buildCompanyIndex() {
