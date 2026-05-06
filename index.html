@@ -513,11 +513,13 @@ async function loadData() {
   }
 }
 
-function buildCompanyIndex() {
+function buildCompanyIndex(data) {
   COMPANIES = {};
-  for (const t of DATA.tenders) {
+
+  for (const t of data.tenders) {
     for (const b of t.bids) {
       const n = b.contractor_name;
+
       if (!COMPANIES[n]) {
         COMPANIES[n] = {
           name: n,
@@ -531,19 +533,30 @@ function buildCompanyIndex() {
           tenders: []
         };
       }
+
       const c = COMPANIES[n];
+
       c.participations++;
-      c.tenders.push({ tender: t.tender_number, subject: t.subject, bid: b });
+      c.tenders.push({
+        tender: t.tender_number,
+        subject: t.subject,
+        bid: b
+      });
+
       if (b.status === 'excluded') {
         c.exclusions++;
       } else {
         if (b.position === 1) c.wins++;
         if (b.position) c.positions.push(b.position);
         if (b.diff_from_winner_pct != null) c.gap_pcts.push(b.diff_from_winner_pct);
-        if (b.offer && b.offer.type === 'percentage') c.discounts.push(b.offer.value);
+        if (b.offer && b.offer.type === 'percentage') {
+          c.discounts.push(b.offer.value);
+        }
       }
     }
   }
+
+  console.log("COMPANIES BUILT:", COMPANIES);
 }
 
 function avg(arr) {
