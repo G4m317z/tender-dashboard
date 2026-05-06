@@ -494,7 +494,7 @@ let COMPANIES = {};  // name -> stats
 
 // ── Load data ──────────────────────────────────────────────
 async function loadData() {
-  const res = await fetch('/tender-dashboard/tenders.json');
+  const res = await fetch('./tenders.json');
 
   const text = await res.text();
   console.log(text); // DEBUG: see raw response
