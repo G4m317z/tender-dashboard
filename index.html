@@ -773,6 +773,7 @@
 <script>
 let RAW = [];
 
+
 async function loadData() {
   const loadingEl = document.getElementById('loading-screen');
   const statusEl = loadingEl.querySelector('.load-status');
@@ -783,229 +784,113 @@ async function loadData() {
       '<div style="font-size:48px;margin-bottom:16px">⚠️</div>' +
       '<div style="font-size:20px;font-weight:800;color:#e8c547;margin-bottom:12px">' + msg + '</div>' +
       '<div style="background:#1a1f2e;border:1px solid #ef5350;border-radius:8px;padding:12px 16px;' +
-      'margin-bottom:16px;font-family:monospace;font-size:12px;color:#ef5350;text-align:left;white-space:pre-wrap">' + detail + '</div>' +
+      'margin-bottom:16px;font-family:monospace;font-size:12px;color:#ef5350;text-align:left">' + detail + '</div>' +
       '<div style="color:#7a8396;font-size:13px;line-height:1.8">' +
-      'Make sure <b style="color:#e8c547">tenders.json</b> and <b style="color:#e8c547">translations.json</b> are in the same folder as <b style="color:#e8c547">index.html</b>.' +
+      'Make sure <b style="color:#e8c547">tenders.json</b> is in the same folder as <b style="color:#e8c547">index.html</b> in your GitHub repo.' +
       '</div></div>';
   }
 
   try {
-
-    // =========================================================
-    // Resolve paths correctly for GitHub Pages subfolders
-    // =========================================================
+    // Use a path relative to the current page URL - works on GitHub Pages subfolders
     const base = window.location.href.replace(/\/[^/]*$/, '/');
+    const url = base + 'tenders.json';
+    if (statusEl) statusEl.textContent = 'Fetching ' + url;
 
-    const tendersUrl = base + 'tenders.json';
-    const translationsUrl = base + 'translations.json';
-
-    if (statusEl) {
-      statusEl.textContent = 'Fetching data files...';
-    }
-
-    // =========================================================
-    // Fetch BOTH files
-    // =========================================================
-    const [tenderRes, transRes] = await Promise.all([
-      fetch(tendersUrl),
-      fetch(translationsUrl)
-    ]);
-
-    if (!tenderRes.ok) {
-      showError(
-        'Could not load tenders.json',
-        'HTTP ' + tenderRes.status + ' — ' + tendersUrl
-      );
+    const res = await fetch(url);
+    if (!res.ok) {
+      showError('Could not load tenders.json', 'HTTP ' + res.status + ' — ' + url);
       return;
     }
 
-    if (!transRes.ok) {
-      showError(
-        'Could not load translations.json',
-        'HTTP ' + transRes.status + ' — ' + translationsUrl
-      );
-      return;
-    }
-
-    // =========================================================
-    // Parse tenders.json
-    // =========================================================
-    const tenderText = await tenderRes.text();
-
-    let tenderData;
-
+    const text = await res.text();
+    let data;
     try {
-      tenderData = JSON.parse(tenderText);
+      data = JSON.parse(text);
     } catch(parseErr) {
-
-      showError(
-        'tenders.json parse error',
-        parseErr.message +
-        '\n\nFirst 300 chars:\n' +
-        tenderText.slice(0, 300)
-      );
-
+      showError('JSON parse error', parseErr.message + '\n\nFirst 200 chars: ' + text.slice(0, 200));
       return;
     }
 
-    // =========================================================
-    // Parse translations.json
-    // =========================================================
-    const transText = await transRes.text();
+    RAW = Array.isArray(data) ? data : (data.tenders || []);
 
-    let translations;
+// Normalize raw scraped data into dashboard-friendly format
+RAW = RAW.map(t => {
+  // Normalize bids
+  const bids = (t.bids || []).map(b => ({
+    ...b,
+    num: b.contractor_number || b.num || '',
+    name: b.contractor_name || b.name || '',
+    value: b.offer?.value ?? null
+  }));
 
-    try {
-      translations = JSON.parse(transText);
-    } catch(parseErr) {
+  // Winning bid
+  const winnerBid =
+    bids.find(b => b.position === 1) ||
+    bids.find(b => b.name === t.winner) ||
+    null;
 
-      showError(
-        'translations.json parse error',
-        parseErr.message +
-        '\n\nFirst 300 chars:\n' +
-        transText.slice(0, 300)
-      );
+  // Normalize dates
+  function normalizeDate(v) {
+    if (!v || v === 'N\\A') return null;
 
-      return;
+    let d = null;
+
+    if (typeof v === 'string') {
+      const cleaned = v.replace('Sept.', 'Sep.');
+      d = new Date(cleaned);
+    } else if (typeof v === 'object' && v.year) {
+      return v;
     }
 
-    // =========================================================
-    // Translation Helpers
-    // =========================================================
-    function trCompany(name) {
-      return translations?.companies?.[name] || name;
-    }
+    if (!d || isNaN(d.getTime())) return null;
 
-    function trOrg(name) {
-      return translations?.organizations?.[name] || name;
-    }
-
-    // =========================================================
-    // Extract raw tenders array
-    // =========================================================
-    let RAW = Array.isArray(tenderData)
-      ? tenderData
-      : (tenderData.tenders || []);
-
-    // =========================================================
-    // Normalize + Translate Data
-    // =========================================================
-    RAW = RAW.map(t => {
-
-      // ---------------------------
-      // Find winning bid
-      // ---------------------------
-      const winnerBid = (t.bids || []).find(
-        b => b.position === 1
-      );
-
-      // ---------------------------
-      // Parse date safely
-      // ---------------------------
-      let parsedDate = null;
-
-      if (t.closing_date) {
-
-        const d = new Date(
-          String(t.closing_date)
-            .replace('Sept.', 'Sep.')
-        );
-
-        if (!isNaN(d)) {
-          parsedDate = {
-            year: d.getFullYear(),
-            month: d.getMonth() + 1,
-            day: d.getDate()
-          };
-        }
-      }
-
-      // ---------------------------
-      // Calculate spread %
-      // ---------------------------
-      let spreadPct = null;
-
-      const validBids = (t.bids || [])
-        .filter(b =>
-          b.offer &&
-          b.offer.type === 'amount' &&
-          typeof b.offer.value === 'number'
-        )
-        .sort((a, b) => a.offer.value - b.offer.value);
-
-      if (validBids.length >= 2) {
-
-        const lowest = validBids[0].offer.value;
-        const second = validBids[1].offer.value;
-
-        if (lowest > 0) {
-          spreadPct =
-            ((second - lowest) / lowest) * 100;
-        }
-      }
-
-      // =====================================================
-      // Return normalized tender
-      // =====================================================
-      return {
-
-        ...t,
-
-        // translated org
-        org: trOrg(t.organization),
-
-        // normalized date
-        closing_date: parsedDate,
-
-        // normalized winner amount
-        winner_amount:
-          winnerBid?.offer?.type === 'amount'
-            ? winnerBid.offer.value
-            : null,
-
-        // spread %
-        spread_pct: spreadPct,
-
-        // translate bids
-        bids: (t.bids || []).map(b => ({
-          ...b,
-
-          num: b.contractor_number,
-
-          name: trCompany(
-            b.contractor_name
-          )
-        }))
-      };
-
-    });
-
-    // =========================================================
-    // Save globally
-    // =========================================================
-    window.RAW = RAW;
-    window.TRANSLATIONS = translations;
-
-    // =========================================================
-    // Continue app startup
-    // =========================================================
-    if (statusEl) {
-      statusEl.textContent = 'Building dashboard...';
-    }
-
-
-    document.getElementById('loading-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
-
+    return {
+      year: d.getFullYear(),
+      month: d.getMonth() + 1,
+      day: d.getDate()
+    };
   }
-  catch(err) {
 
-    console.error(err);
+  const winnerAmount =
+    winnerBid?.offer?.type === 'amount'
+      ? Number(winnerBid.offer.value || 0)
+      : null;
 
-    showError(
-      'Unexpected error',
-      err.stack || err.message || String(err)
-    );
+  // Calculate spread %
+  const approvedAmounts = bids
+    .filter(b => b.offer?.type === 'amount' && typeof b.offer?.value === 'number')
+    .map(b => b.offer.value);
+
+  const spreadPct =
+    approvedAmounts.length >= 2 && winnerAmount
+      ? ((Math.max(...approvedAmounts) - Math.min(...approvedAmounts)) / winnerAmount) * 100
+      : null;
+
+  return {
+    ...t,
+    org: t.organization || t.org || 'Unknown',
+    bids,
+    winner_amount: winnerAmount,
+    spread_pct: spreadPct,
+    closing_date: normalizeDate(t.closing_date),
+    publish_date: normalizeDate(t.publish_date),
+    meeting_date: normalizeDate(t.meeting_date)
+  };
+});
+
+    if (RAW.length === 0) {
+      showError('No tenders found', 'data.tenders was empty or missing. Keys found: ' + Object.keys(data).join(', '));
+      return;
+    }
+
+    loadingEl.style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    populateSelects();
+    renderOverview();
+    renderOrgDetail();
+
+  } catch(e) {
+    showError('Fetch failed', e.message);
   }
 }
 
