@@ -387,7 +387,7 @@
   <div style="text-align:center">
     <div style="font-size:48px;margin-bottom:20px;animation:spin 1.5s linear infinite;display:inline-block">⚙️</div>
     <div style="font-size:20px;font-weight:800;color:#e8c547;margin-bottom:8px">Loading Tenders Data...</div>
-    <div class="load-status" style="color:#7a8396;font-size:13px">Fetching tenders.json...</div>
+    <div style="color:#7a8396;font-size:13px">Fetching tenders.json</div>
   </div>
 </div>
 <style>@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }</style>
@@ -402,7 +402,7 @@
   </div>
   <div class="header-stats">
     <div class="hstat">
-      <div class="hstat-val" id="hs-total">—</div>
+      <div class="hstat-val" id="hs-total">550</div>
       <div class="hstat-label">Total Tenders</div>
     </div>
     <div class="hstat">
@@ -775,56 +775,23 @@ let RAW = [];
 
 async function loadData() {
   const loadingEl = document.getElementById('loading-screen');
-  const statusEl = loadingEl.querySelector('.load-status');
-
-  function showError(msg, detail) {
-    loadingEl.innerHTML =
-      '<div style="text-align:center;padding:60px;max-width:600px;margin:0 auto">' +
-      '<div style="font-size:48px;margin-bottom:16px">⚠️</div>' +
-      '<div style="font-size:20px;font-weight:800;color:#e8c547;margin-bottom:12px">' + msg + '</div>' +
-      '<div style="background:#1a1f2e;border:1px solid #ef5350;border-radius:8px;padding:12px 16px;' +
-      'margin-bottom:16px;font-family:monospace;font-size:12px;color:#ef5350;text-align:left">' + detail + '</div>' +
-      '<div style="color:#7a8396;font-size:13px;line-height:1.8">' +
-      'Make sure <b style="color:#e8c547">tenders.json</b> is in the same folder as <b style="color:#e8c547">index.html</b> in your GitHub repo.' +
-      '</div></div>';
-  }
-
   try {
-    // Use a path relative to the current page URL - works on GitHub Pages subfolders
-    const base = window.location.href.replace(/\/[^/]*$/, '/');
-    const url = base + 'tenders.json';
-    if (statusEl) statusEl.textContent = 'Fetching ' + url;
-
-    const res = await fetch(url);
-    if (!res.ok) {
-      showError('Could not load tenders.json', 'HTTP ' + res.status + ' — ' + url);
-      return;
-    }
-
-    const text = await res.text();
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch(parseErr) {
-      showError('JSON parse error', parseErr.message + '\n\nFirst 200 chars: ' + text.slice(0, 200));
-      return;
-    }
-
-    RAW = Array.isArray(data) ? data : (data.tenders || []);
-
-    if (RAW.length === 0) {
-      showError('No tenders found', 'data.tenders was empty or missing. Keys found: ' + Object.keys(data).join(', '));
-      return;
-    }
-
+    const res = await fetch('tenders.json');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    RAW = data.tenders || data;
     loadingEl.style.display = 'none';
     document.getElementById('app').style.display = 'block';
     populateSelects();
     renderOverview();
     renderOrgDetail();
-
   } catch(e) {
-    showError('Fetch failed', e.message);
+    loadingEl.innerHTML = `<div style="text-align:center;padding:80px">
+      <div style="font-size:48px;margin-bottom:16px">⚠️</div>
+      <div style="font-size:20px;font-weight:800;color:#e8c547;margin-bottom:8px">Could not load tenders.json</div>
+      <div style="color:#7a8396;font-size:14px;margin-bottom:24px">${e.message}</div>
+      <div style="color:#7a8396;font-size:13px">Make sure tenders.json is in the same folder as index.html<br>and you're serving via a web server (not file://)</div>
+    </div>`;
   }
 }
 
